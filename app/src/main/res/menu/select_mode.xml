@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/select_all" android:showAsAction="always" android:title="@string/select_all" android:icon="@mipmap/ic_select_all_white_48dp" />
+    <item android:id="@+id/deselect_all" android:showAsAction="always" android:title="@string/deselect_all" android:icon="@mipmap/ic_select_off_white_48dp" />
+    <item android:id="@+id/sleep" android:showAsAction="always" android:title="@string/sleep" android:icon="@mipmap/ic_sleep_white_48dp"/>
+    <item android:id="@+id/wake" android:showAsAction="always" android:title="@string/wake" android:icon="@mipmap/ic_sleep_off_white_48dp"/>
+    <item android:id="@+id/del" android:showAsAction="always"  android:title="@string/del" android:icon="@mipmap/ic_delete_white_48dp" />
+</menu>

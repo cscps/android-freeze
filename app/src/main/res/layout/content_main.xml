@@ -14,12 +14,14 @@
         android:paddingRight="10dp"
         android:paddingTop="20dp"
         android:paddingBottom="50dp"
+        android:choiceMode="multipleChoiceModal"
         android:id="@+id/grid_view"
         android:numColumns="auto_fit"
-        android:columnWidth="90dp"
+        android:columnWidth="80dp"
         android:horizontalSpacing="10dp"
-        android:verticalSpacing="20dp"
+        android:verticalSpacing="10dp"
         android:stretchMode="columnWidth"
+        android:fastScrollEnabled="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
     </com.myangelcrys.freeze.ExpandableGridView>

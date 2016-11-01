@@ -11,17 +11,19 @@ import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.SparseBooleanArray;
+import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.DialogPlusBuilder;
@@ -40,6 +42,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     Handler handler;
+    private boolean isSelectionMode=false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,29 +51,40 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         FloatingActionButton btn_add= (FloatingActionButton) findViewById(R.id.btn_add_app);
+/*        try {
+            Process a = Runtime.getRuntime().exec("pm hide com.myangelcrys.freeze");
+            BufferedInputStream bf=new BufferedInputStream(a.getInputStream());
+            byte[]b=new byte[1024];
+            bf.read(b);
+            Toast.makeText(MainActivity.this,new String(b),Toast.LENGTH_LONG).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(MainActivity.this,"error "+e.getMessage(),Toast.LENGTH_LONG).show();
+        }*/
         btn_add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 getDialogPlus().create().show();
             }
         });
-        new DialogAsyncTask(this,getPkgLoadingTask()).execute();
+        new DialogAsyncTask(this, getGridViewInitTask()).execute();
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.btn_free_all);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View view) {
                 new DialogAsyncTask(MainActivity.this, getFreeAll(view)).execute();
+                refresh(getPrefsApps());
             }
         });
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+/*        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+        navigationView.setNavigationItemSelectedListener(this);*/
     }
 
     private DialogPlusBuilder getDialogPlus() {
@@ -94,7 +108,7 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void run() {
                         MySharedPref.addApp(getApplicationContext(),pkg);
-                        Utils.enable(pkg,false);
+                        if (isEnabled(pkg))Utils.enable(pkg,false);
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
@@ -113,7 +127,7 @@ public class MainActivity extends AppCompatActivity
         return new Runnable() {
                     @Override
                     public void run() {
-                        freezeAll();
+                        enableAll(false);
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
@@ -135,8 +149,111 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private Runnable getPkgLoadingTask(){
+    private Runnable getGridViewInitTask(){
         final GridView gridView = (GridView) findViewById(R.id.grid_view);
+        gridView.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
+        gridView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
+            @Override
+            public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+            }
+
+            @Override
+            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                mode.getMenuInflater().inflate(R.menu.select_mode,menu);
+                isSelectionMode=true;
+                return true;
+            }
+
+            @Override
+            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                return false;
+            }
+
+            @Override
+            public boolean onActionItemClicked(final ActionMode mode, MenuItem item) {
+                switch (item.getItemId()){
+                    case R.id.select_all:
+                        for (int i=0;i<gridView.getChildCount();i++){
+                            gridView.setItemChecked(i,true);
+                        }
+                        break;
+                    case R.id.deselect_all:
+                        for (int i=0;i<gridView.getChildCount();i++){
+                            gridView.setItemChecked(i,false);
+                        }
+                        mode.finish();
+                        break;
+                    case R.id.sleep:
+                        new DialogAsyncTask(MainActivity.this, new Runnable() {
+                            @Override
+                            public void run() {
+                                enableAll(getCheckedPkg(),false);
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mode.finish();
+                                        refresh(getPrefsApps());
+                                    }
+                                });
+                            }
+                        }).execute();
+                        break;
+                    case R.id.del:
+                        new DialogAsyncTask(MainActivity.this, new Runnable() {
+                            @Override
+                            public void run() {
+                                HashSet<String> s = MySharedPref.getAppsHashSet(MainActivity.this);
+                                HashSet<String>checked=getCheckedPkg();
+                                s.removeAll(checked);
+                                MySharedPref.saveApps(getApplicationContext(),s);
+                                enableAll(checked,true);
+                                refresh(getPrefsApps());
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mode.finish();
+                                    }
+                                });
+                            }
+                        }).execute();
+                        break;
+                    case R.id.wake:
+                        new DialogAsyncTask(MainActivity.this, new Runnable() {
+                            @Override
+                            public void run() {
+                                HashSet<String>checked=getCheckedPkg();
+                                enableAll(checked,true);
+                                refresh(getPrefsApps());
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mode.finish();
+                                    }
+                                });
+                            }
+                        }).execute();
+                        break;
+                }
+                return true;
+            }
+
+            @Override
+            public void onDestroyActionMode(ActionMode mode) {
+                isSelectionMode=false;
+            }
+        });
+        final View.OnClickListener clickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                if (isSelectionMode)return;
+                new DialogAsyncTask(MainActivity.this, new Runnable() {
+                    @Override
+                    public void run() {
+                        Utils.startApp(MainActivity.this, (String) v.getTag());
+                    }
+                }).execute();
+            }
+        };
         Runnable run = new Runnable() {
             @Override
             public void run() {
@@ -147,52 +264,10 @@ public class MainActivity extends AppCompatActivity
                         return apps.contains(applicationInfo.packageName);
                     }
                 });
-                final View.OnClickListener clickListener = new View.OnClickListener() {
-                    @Override
-                    public void onClick(final View v) {
-                        new DialogAsyncTask(MainActivity.this, new Runnable() {
-                            @Override
-                            public void run() {
-                                Utils.startApp(MainActivity.this, (String) v.getTag());
-                            }
-                        }).execute();
-                    }
-                };
-                final View.OnLongClickListener l = new View.OnLongClickListener() {
-                    @Override
-                    public boolean onLongClick(View v) {
-                        List<String> out;
-                        ApplicationInfo app = null;
-                        try {
-                            app = getPackageManager().getApplicationInfo("" + v.getTag(), PackageManager.GET_META_DATA);
-                        } catch (PackageManager.NameNotFoundException e) {
-                            e.printStackTrace();
-                            return false;
-                        }
-                        if (app.enabled) {
-                            out = Utils.enable(app.packageName, false);
-                            if (v instanceof ViewGroup) {
-                                TextView textView = (TextView) v.findViewById(R.id.app_name);
-                                textView.setTextColor(Color.RED);
-                            }
-                        } else {
-                            out = Utils.enable(app.packageName, true);
-                            if (v instanceof ViewGroup) {
-                                TextView textView = (TextView) v.findViewById(R.id.app_name);
-                                textView.setTextColor(Color.GREEN);
-                            }
-                        }
-                        if (out.size() != 0)
-                            Toast.makeText(MainActivity.this, out.get(0), Toast.LENGTH_SHORT).show();
-                        return true;
-                    }
-                };
                 simpleAdapter.addListener(new MySimpleAdpter.Listener() {
                     @Override
                     public void onCreateView(final View view, Map map) {
                         view.setTag(map.get("pkg"));
-                        view.setOnLongClickListener(l);
-                        view.setOnClickListener(clickListener);
                     }
                 });
                 handler.post(new Runnable() {
@@ -205,6 +280,19 @@ public class MainActivity extends AppCompatActivity
         };
         return run;
     }
+
+    private HashSet<String> getCheckedPkg() {
+        GridView gridView= (GridView) findViewById(R.id.grid_view);
+        SparseBooleanArray ps = gridView.getCheckedItemPositions();
+        HashSet<String>checked=new HashSet<>();
+        for (int i=0;i<ps.size();i++){
+            if (!ps.get(ps.keyAt(i)))continue;
+            String pkg= (String) gridView.getChildAt(ps.keyAt(i)).getTag();
+            checked.add(pkg);
+        }
+        return checked;
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -220,10 +308,7 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        else if (id==R.id.refresh){
+        if (id==R.id.refresh){
             refresh(getPrefsApps());
         }
 
@@ -298,6 +383,7 @@ public class MainActivity extends AppCompatActivity
         List<Map<String, ?>> data=new ArrayList<>();
         for (ApplicationInfo app:packages){
             if (!appFilter.isInclude(app))continue;
+            if (getApplication().getPackageName().equals(app.packageName))continue;
             Map<String,Object>map=new HashMap<>();
             map.put("img",app.loadIcon(getPackageManager()));
             map.put("text",app.loadLabel(getPackageManager()));
@@ -315,10 +401,25 @@ public class MainActivity extends AppCompatActivity
         }
         return false;
     }
-    private void freezeAll(){
+    private void enableAll(Set<String>r,boolean enable){
+        for (String pkg:r){
+            if (enable){
+                if (!isEnabled(pkg))Utils.enable(pkg,true);
+            }
+            else {
+                if (isEnabled(pkg))Utils.enable(pkg,false);
+            }
+        }
+    }
+    private void enableAll(boolean enable){
         Set<String>r=MySharedPref.getApps(getApplicationContext());
         for (String pkg:r){
-            if (isEnabled(pkg))Utils.enable(pkg,false);
+            if (enable){
+                if (!isEnabled(pkg))Utils.enable(pkg,true);
+            }
+            else {
+                if (isEnabled(pkg))Utils.enable(pkg,false);
+            }
         }
     }
     private AppFilter getPrefsApps(){
@@ -342,6 +443,19 @@ public class MainActivity extends AppCompatActivity
     }
     private void init(){
         handler=new Handler(Looper.getMainLooper());
+        final GridView gridView= (GridView) findViewById(R.id.grid_view);
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+                if (isSelectionMode)return;
+                new DialogAsyncTask(MainActivity.this, new Runnable() {
+                    @Override
+                    public void run() {
+                        Utils.startApp(MainActivity.this, (String) gridView.getChildAt(position).getTag());
+                    }
+                }).execute();
+            }
+        });
     }
     private boolean isUserApp(ApplicationInfo applicationInfo){
         return (applicationInfo.flags&(ApplicationInfo.FLAG_SYSTEM|ApplicationInfo.FLAG_UPDATED_SYSTEM_APP))==0;
