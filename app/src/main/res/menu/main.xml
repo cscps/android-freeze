@@ -4,6 +4,11 @@
     <item
         android:id="@+id/refresh"
         android:title="@string/refresh"
-        android:icon="@mipmap/ic_refresh_white_48dp"
+        android:icon="@drawable/refresh_bg"
+        app:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/sleep_shortcut"
+        android:title="@string/sleep_shortcut"
+        android:icon="@drawable/telegram"
         app:showAsAction="ifRoom"/>
 </menu>

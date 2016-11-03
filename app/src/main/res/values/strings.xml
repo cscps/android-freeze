@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Freeze</string>
+    <string name="app_name">crystal</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -12,4 +12,6 @@
     <string name="wake">wake</string>
     <string name="del">del</string>
     <string name="sleep">sleep</string>
+    <string name="create_shortcuts">创建快捷方式</string>
+    <string name="sleep_shortcut">创建一键休眠</string>
 </resources>

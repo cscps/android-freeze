@@ -1,26 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.myangelcrys.freeze">
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-    <uses-permission android:name="android.permission.MANAGE_USERS"/>
     <uses-permission android:name="android.permission.ACCESS_SUPERUSER"/>
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
+
     <application
         android:name=".MyApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/icon"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <receiver android:name=".StartAppReceiver">
+            <intent-filter>
+                <action android:name="com.myangelcrys.freeze.start"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </receiver>
+        <activity android:name=".StartAppActivity" android:icon="@mipmap/ic_sleep_white_48dp" android:launchMode="singleTop" android:excludeFromRecents="true" android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+            <intent-filter android:icon="@mipmap/ic_sleep_white_48dp" android:label="立即休眠">
+                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service android:name=".FreezeService">
+        </service>
     </application>
 
 </manifest>
