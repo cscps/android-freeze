@@ -100,8 +100,8 @@ public class MainActivity extends AppCompatActivity
                                 handler.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        Snackbar.make(view, "已全部休眠", Snackbar.LENGTH_LONG)
-                                                .setAction("Action", null).show();
+                                        Snackbar.make(view, R.string.msg_slept, Snackbar.LENGTH_LONG)
+                                                .setAction(R.string.msg_done, null).show();
                                     }
                                 });
                             }
@@ -145,7 +145,7 @@ public class MainActivity extends AppCompatActivity
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
-                                holder.setAdapter(adpter);
+                                adpter.notifyDataSetChanged();
                             }
                         });
                     }
@@ -369,7 +369,13 @@ public class MainActivity extends AppCompatActivity
                 MySimpleAdpter mySimpleAdpter = (MySimpleAdpter) view.getAdapter();
                 if (mySimpleAdpter == null) return;
                 mySimpleAdpter.getmData().clear();
-                mySimpleAdpter.getmData().addAll(getData(appFilter));
+                List<Map<String, ?>> data=getData(appFilter);
+                Set<String>pkgs=new HashSet<>();
+                for (Map<String,?>m:data){
+                    pkgs.add((String) m.get("pkg"));
+                }
+                MySharedPref.saveApps(MainActivity.this,pkgs);
+                mySimpleAdpter.getmData().addAll(data);
                 view.setAdapter(mySimpleAdpter);
             }
         });
@@ -503,8 +509,8 @@ public class MainActivity extends AppCompatActivity
             public boolean isInclude(ApplicationInfo applicationInfo) {
 //                return isUserApp(applicationInfo)&&!apps.contains(applicationInfo.packageName);
                 return !apps.contains(applicationInfo.packageName) &&
-                        !applicationInfo.packageName.contains("com.android") &&
-                        !applicationInfo.packageName.contains("com.google.android") &&
+//                        !applicationInfo.packageName.contains("com.android") &&
+//                        !applicationInfo.packageName.contains("com.google.android") &&
                         !applicationInfo.packageName.contains("supersu") &&
                         !applicationInfo.packageName.equals("android");
             }

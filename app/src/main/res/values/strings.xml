@@ -14,4 +14,6 @@
     <string name="sleep">sleep</string>
     <string name="create_shortcuts">创建快捷方式</string>
     <string name="sleep_shortcut">创建一键休眠</string>
+    <string name="msg_slept">已全部休眠</string>
+    <string name="msg_done">已完成</string>
 </resources>

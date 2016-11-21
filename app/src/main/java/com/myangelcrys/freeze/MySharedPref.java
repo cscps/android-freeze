@@ -12,7 +12,6 @@ import java.util.Set;
  */
 
 public class MySharedPref {
-    static SharedPreferences preferences;
     public static String PREF_FREEZE="freeze";
     static final String key="freeze";
     static HashMap<String,SharedPreferences>map=new HashMap<>();
