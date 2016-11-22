@@ -3,6 +3,8 @@
     package="com.myangelcrys.freeze">
     <uses-permission android:name="android.permission.ACCESS_SUPERUSER"/>
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <application
         android:name=".MyApplication"
@@ -22,9 +24,48 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
-            <intent-filter android:icon="@mipmap/ic_sleep_white_48dp" android:label="立即休眠">
+            <intent-filter android:icon="@mipmap/ic_sleep_white_48dp" android:label="@string/sleep">
                 <action android:name="android.intent.action.CREATE_SHORTCUT" />
                 <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".ResolverActivity" android:theme="@style/Theme.AppCompat.Dialog" >
+            <intent-filter android:label="@string/lable_resolver">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="http"/>
+                <data android:scheme="https"/>
+                <data android:scheme="about"/>
+                <data android:scheme="javascript"/>
+                <data android:scheme="geo"/>
+                <data android:scheme="market"/>
+                <data android:scheme="intent"/>
+                <data android:scheme="content"/>
+                <data android:scheme="mailto"/>
+            </intent-filter>
+            <intent-filter android:label="@string/lable_resolver">
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <action android:name="android.intent.action.PICK" />
+                <action android:name="android.intent.action.GET_CONTENT" />
+                <action android:name="android.intent.action.INSERT" />
+                <action android:name="android.intent.action.SEND"/>
+                <action android:name="android.intent.action.SENDTO"/>
+                <action android:name="android.intent.action.SEARCH"/>
+                <action android:name="android.intent.action.SEND_MULTIPLE"/>
+                <action android:name="android.intent.action.WEB_SEARCH"/>
+                <action android:name="android.intent.action.CALL"/>
+                <action android:name="android.intent.action.OPEN_DOCUMENT"/>
+                <action android:name="android.intent.action.DIAL"/>
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/*"/>
+                <data android:mimeType="text/*"/>
+                <data android:mimeType="audio/*"/>
+                <data android:mimeType="image/*"/>
+                <data android:mimeType="video/*"/>
+                <data android:mimeType="model/*"/>
+                <data android:mimeType="*/*"/>
             </intent-filter>
         </activity>
         <activity
@@ -39,5 +80,4 @@
         <service android:name=".FreezeService">
         </service>
     </application>
-
 </manifest>

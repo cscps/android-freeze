@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">crystal</string>
+    <string name="create_shortcuts">创建快捷方式</string>
+    <string name="msg_done">已完成</string>
+    <string name="msg_slept">已全部休眠</string>
+    <string name="not_found_prog">找不到处理程序</string>
+    <string name="refresh">刷新</string>
+    <string name="select_all">全选</string>
+    <string name="sleep">休眠</string>
+    <string name="sleep_shortcut">创建一键休眠</string>
+    <string name="wake">唤醒</string>
+    <string name="del">删除</string>
+    <string name="deselect_all">取消全选</string>
+    <string name="cancel">取消</string>
+    <string name="action_settings">设置</string>
+    <string name="lable_resolver">*已冻结应用*</string>
+</resources>

@@ -35,11 +35,6 @@ import com.orhanobut.dialogplus.GridHolder;
 import com.orhanobut.dialogplus.OnDismissListener;
 import com.orhanobut.dialogplus.OnItemClickListener;
 
-import java.text.Collator;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -95,8 +90,8 @@ public class MainActivity extends AppCompatActivity
                         new Runnable() {
                             @Override
                             public void run() {
-                                enableAll(false);
-                                refresh(getPrefsApps());
+                                getMyApplication().enableAll(false);
+                                refresh(getMyApplication().getPrefsApps());
                                 handler.post(new Runnable() {
                                     @Override
                                     public void run() {
@@ -122,14 +117,14 @@ public class MainActivity extends AppCompatActivity
 
     private DialogPlusBuilder getDialogPlus() {
         DialogPlusBuilder dialogPlus = DialogPlus.newDialog(MainActivity.this);
-        final MySimpleAdpter adpter = (MySimpleAdpter) getAdapter(getNotInPrefsApps());
+        final MySimpleAdpter adpter = (MySimpleAdpter) getAdapter(getMyApplication().getNotInPrefsApps());
         dialogPlus.setAdapter(adpter);
         final GridHolder holder = new GridHolder(4);
         dialogPlus.setContentHolder(holder);
         dialogPlus.setOnDismissListener(new OnDismissListener() {
             @Override
             public void onDismiss(DialogPlus dialog) {
-                refresh(getPrefsApps());
+                refresh(getMyApplication().getPrefsApps());
             }
         });
         dialogPlus.setOnItemClickListener(new OnItemClickListener() {
@@ -141,7 +136,7 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void run() {
                         MySharedPref.addApp(getApplicationContext(), pkg);
-                        if (isEnabled(pkg)) Utils.enable(pkg, false);
+                        if (getMyApplication().isEnabled(pkg)) Utils.enable(pkg, false);
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
@@ -205,12 +200,12 @@ public class MainActivity extends AppCompatActivity
                         new DialogAsyncTask(MainActivity.this, new Runnable() {
                             @Override
                             public void run() {
-                                enableAll(getCheckedPkg(), false);
+                                getMyApplication().enableAll(getCheckedPkg(), false);
                                 handler.post(new Runnable() {
                                     @Override
                                     public void run() {
                                         mode.finish();
-                                        refresh(getPrefsApps());
+                                        refresh(getMyApplication().getPrefsApps());
                                         Toast.makeText(MainActivity.this,"已休眠",Toast.LENGTH_SHORT).show();
                                     }
                                 });
@@ -225,8 +220,8 @@ public class MainActivity extends AppCompatActivity
                                 HashSet<String> checked = getCheckedPkg();
                                 s.removeAll(checked);
                                 MySharedPref.saveApps(getApplicationContext(), s);
-                                enableAll(checked, true);
-                                refresh(getPrefsApps());
+                                getMyApplication().enableAll(checked, true);
+                                refresh(getMyApplication().getPrefsApps());
                                 handler.post(new Runnable() {
                                     @Override
                                     public void run() {
@@ -242,8 +237,8 @@ public class MainActivity extends AppCompatActivity
                             @Override
                             public void run() {
                                 HashSet<String> checked = getCheckedPkg();
-                                enableAll(checked, true);
-                                refresh(getPrefsApps());
+                                getMyApplication().enableAll(checked, true);
+                                refresh(getMyApplication().getPrefsApps());
                                 handler.post(new Runnable() {
                                     @Override
                                     public void run() {
@@ -350,7 +345,7 @@ public class MainActivity extends AppCompatActivity
         //noinspection SimplifiableIfStatement
         switch (id){
             case R.id.refresh:
-                refresh(getPrefsApps());
+                refresh(getMyApplication().getPrefsApps());
                 break;
             case R.id.sleep_shortcut:
                 sendBroadcast(Utils.createShortCutIntent(MainActivity.this));
@@ -369,7 +364,7 @@ public class MainActivity extends AppCompatActivity
                 MySimpleAdpter mySimpleAdpter = (MySimpleAdpter) view.getAdapter();
                 if (mySimpleAdpter == null) return;
                 mySimpleAdpter.getmData().clear();
-                List<Map<String, ?>> data=getData(appFilter);
+                List<Map<String, ?>> data=getMyApplication().getData(appFilter);
                 Set<String>pkgs=new HashSet<>();
                 for (Map<String,?>m:data){
                     pkgs.add((String) m.get("pkg"));
@@ -384,7 +379,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        refresh(getPrefsApps());
+        refresh(getMyApplication().getPrefsApps());
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
@@ -414,14 +409,14 @@ public class MainActivity extends AppCompatActivity
 
     private SimpleAdapter getAdapter(AppFilter appFilter) {
         MySimpleAdpter mySimpleAdpter = new MySimpleAdpter(this,
-                getData(appFilter), R.layout.grid_item, new String[]{"img", "text"}, new int[]{R.id.ic, R.id.app_name});
+                getMyApplication().getData(appFilter), R.layout.grid_item, new String[]{"img", "text"}, new int[]{R.id.ic, R.id.app_name});
         mySimpleAdpter.addListener(new MySimpleAdpter.Listener() {
             @Override
             public void onCreateView(View view, Map map) {
                 view.setTag(map.get("pkg"));
                 if (view instanceof ViewGroup) {
                     TextView textView = (TextView) view.findViewById(R.id.app_name);
-                    if (isEnabled((String) view.getTag())) textView.setTextColor(Color.GREEN);
+                    if (getMyApplication().isEnabled((String) view.getTag())) textView.setTextColor(Color.GREEN);
                     else textView.setTextColor(Color.RED);
                 }
             }
@@ -429,93 +424,6 @@ public class MainActivity extends AppCompatActivity
         return mySimpleAdpter;
     }
 
-    private List<Map<String, ?>> getData(AppFilter appFilter) {
-        final Collator c = Collator.getInstance(getResources().getConfiguration().locale);
-        List<ApplicationInfo> packages = getPackageManager().getInstalledApplications(0);
-        List<Map<String, ?>> data = new ArrayList<>();
-        List<Map<String, ?>> sys = new ArrayList<>();
-        for (ApplicationInfo app : packages) {
-            if (!appFilter.isInclude(app)) continue;
-            if (getApplication().getPackageName().equals(app.packageName)) continue;
-            Map<String, Object> map = new HashMap<>();
-            map.put("img", app.loadIcon(getPackageManager()));
-            map.put("text", app.loadLabel(getPackageManager()));
-            map.put("pkg", app.packageName);
-            if (!isUserApp(app)) {
-                sys.add(map);
-            } else if (app.enabled) data.add(map);
-            else data.add(0, map);
-        }
-        Collections.sort(data, new Comparator<Map<String, ?>>() {
-            @Override
-            public int compare(Map<String, ?> o1, Map<String, ?> o2) {
-                return c.compare(o1.get("text"),o2.get("text"));
-            }
-        });
-        Collections.sort(sys, new Comparator<Map<String, ?>>() {
-            @Override
-            public int compare(Map<String, ?> o1, Map<String, ?> o2) {
-                return c.compare(o1.get("text"),o2.get("text"));
-            }
-        });
-        data.addAll(sys);
-        return data;
-    }
-
-    private boolean isEnabled(String pkg) {
-        try {
-            return getPackageManager().getApplicationInfo(pkg, 0).enabled;
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    private void enableAll(Set<String> r, boolean enable) {
-        for (String pkg : r) {
-            if (enable) {
-                if (!isEnabled(pkg)) Utils.enable(pkg, true);
-            } else {
-                if (isEnabled(pkg)) Utils.enable(pkg, false);
-            }
-        }
-    }
-
-    private void enableAll(boolean enable) {
-        Set<String> r = MySharedPref.getApps(getApplicationContext());
-        for (String pkg : r) {
-            if (enable) {
-                if (!isEnabled(pkg)) Utils.enable(pkg, true);
-            } else {
-                if (isEnabled(pkg)) Utils.enable(pkg, false);
-            }
-        }
-    }
-
-    private AppFilter getPrefsApps() {
-        final HashSet<String> apps = MySharedPref.getAppsHashSet(getApplicationContext());
-        return new AppFilter() {
-            @Override
-            public boolean isInclude(ApplicationInfo applicationInfo) {
-                return apps.contains(applicationInfo.packageName);
-            }
-        };
-    }
-
-    private AppFilter getNotInPrefsApps() {
-        final HashSet<String> apps = MySharedPref.getAppsHashSet(getApplicationContext());
-        return new AppFilter() {
-            @Override
-            public boolean isInclude(ApplicationInfo applicationInfo) {
-//                return isUserApp(applicationInfo)&&!apps.contains(applicationInfo.packageName);
-                return !apps.contains(applicationInfo.packageName) &&
-//                        !applicationInfo.packageName.contains("com.android") &&
-//                        !applicationInfo.packageName.contains("com.google.android") &&
-                        !applicationInfo.packageName.contains("supersu") &&
-                        !applicationInfo.packageName.equals("android");
-            }
-        };
-    }
 
     private void init() {
         handler = new Handler(Looper.getMainLooper());
@@ -533,8 +441,8 @@ public class MainActivity extends AppCompatActivity
             }
         });
     }
-
-    private boolean isUserApp(ApplicationInfo applicationInfo) {
-        return (applicationInfo.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) == 0;
+    private MyApplication getMyApplication(){
+        return (MyApplication) getApplication();
     }
+
 }

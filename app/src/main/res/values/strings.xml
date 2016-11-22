@@ -12,8 +12,10 @@
     <string name="wake">wake</string>
     <string name="del">del</string>
     <string name="sleep">sleep</string>
-    <string name="create_shortcuts">创建快捷方式</string>
-    <string name="sleep_shortcut">创建一键休眠</string>
-    <string name="msg_slept">已全部休眠</string>
-    <string name="msg_done">已完成</string>
+    <string name="create_shortcuts">create_shortcut</string>
+    <string name="sleep_shortcut">create sleep-shortcut</string>
+    <string name="msg_slept">all slept</string>
+    <string name="lable_resolver">*slept apps*</string>
+    <string name="msg_done">done</string>
+    <string name="not_found_prog">can not find program to process</string>
 </resources>
